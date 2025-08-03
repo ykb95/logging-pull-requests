@@ -1,39 +1,19 @@
-name: Log PR to Wiki
-
-on:
-  pull_request:
-    types: [opened, edited, closed]
-
 jobs:
-  log-to-wiki:
+  log-pr:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout PR Repo
-      uses: actions/checkout@v3
+      - name: Checkout main repo
+        uses: actions/checkout@v3
 
-    - name: Get PR details
-      id: pr
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const pr = context.payload.pull_request;
-          const output = `
-          ## PR #${pr.number}: ${pr.title}
-          - **Author**: ${pr.user.login}
-          - **Created At**: ${pr.created_at}
-          - **State**: ${pr.state}
-          - **Description**:\n${pr.body}
-          `;
-          return output;
-
-    - name: Clone the Wiki repository
-      run: |
-        git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.wiki.git wiki
-        cd wiki
-        echo "${{ steps.pr.outputs.result }}" > "pr-${{ github.event.pull_request.number }}.md"
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add .
-        git commit -m "Add PR #${{ github.event.pull_request.number }} to wiki"
-        git push
+      - name: Log pull request to wiki
+        run: |
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/ykb95/logging-pull-requests.wiki.git wiki
+          cd wiki
+          echo -e "## PR #1: Add GitHub Actions workflow\n- **Author**: ykb95\n- **Created At**: 2025-08-03T19:49:48Z\n- **State**: open\n- **Description**:\nnull" > "pr-1.md"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Add PR #1 to wiki"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
