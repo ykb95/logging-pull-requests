@@ -1,19 +1,38 @@
+name: Log PR to Wiki
+
+on:
+  pull_request:
+    types: [opened]
+
 jobs:
-  log-pr:
+  log_pr:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout main repo
+      - name: Checkout Main Repository
         uses: actions/checkout@v3
 
-      - name: Log pull request to wiki
+      - name: Checkout Wiki
         run: |
-          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/ykb95/logging-pull-requests.wiki.git wiki
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki
+
+      - name: Generate PR Log
+        run: |
+          FILE_NAME="wiki/pr-${{ github.event.pull_request.number }}.md"
+          echo "## PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}" > $FILE_NAME
+          echo "- **Author**: ${{ github.event.pull_request.user.login }}" >> $FILE_NAME
+          echo "- **Created At**: ${{ github.event.pull_request.created_at }}" >> $FILE_NAME
+          echo "- **State**: ${{ github.event.pull_request.state }}" >> $FILE_NAME
+          echo "- **Description**:" >> $FILE_NAME
+          echo "${{ github.event.pull_request.body || 'No description provided.' }}" >> $FILE_NAME
+
+      - name: Commit and Push to Wiki
+        run: |
           cd wiki
-          echo -e "## PR #1: Add GitHub Actions workflow\n- **Author**: ykb95\n- **Created At**: 2025-08-03T19:49:48Z\n- **State**: open\n- **Description**:\nnull" > "pr-1.md"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "Add PR #1 to Wiki"
+          git commit -m "Log PR #${{ github.event.pull_request.number }}"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
